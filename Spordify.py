@@ -13,8 +13,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 
 
-######## Put link to playlist:
-PLAYLIST = input("Enter playlist link: ")
 
 ######## Copy the following into terminal:
 #export SPOTIPY_CLIENT_ID=bc8bf2a574684725bea4c3900d745057
@@ -24,6 +22,8 @@ PLAYLIST = input("Enter playlist link: ")
 scope = ["user-library-read", "user-library-modify", "playlist-modify-public"]
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
 results = sp.playlist_tracks(PLAYLIST) # results = playlist details
+
+PLAYLIST = input("Enter playlist link: ")
 
 def reorder(order):
     for i in range(len(order)):
