@@ -150,7 +150,6 @@ def bpmSort():
     
     order = scrape(order, 1)
     order = sorted(order, key=lambda x: int(x[0]))
-    print(order)
     order = [element[1] for element in order]
     reorder(order)
 
