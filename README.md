@@ -12,8 +12,8 @@ Spordify is a python script that allows users to sort their playlists based on s
 ### Setup
 Once registered for a Spotify App, add a Redirect URI to the Application settings (which can just be http://example.com). Before running the script, store the SPOTIPY_REDIRECT_URI, SPOTIFY_CLIENT_ID, and SPOTIFY_CLIENT_SECRET in environment variables by writing the following in your code environment:
 ```
-export SPOTIPY_CLIENT_ID="<CLIENT_ID>"
-export SPOTIPY_CLIENT_SECRET="<CLIENT_SECRET>"
+export SPOTIPY_CLIENT_ID=<CLIENT_ID>
+export SPOTIPY_CLIENT_SECRET=<CLIENT_SECRET>
 export SPOTIPY_REDIRECT_URI="<REDIRECT_URI>"
 ```
 

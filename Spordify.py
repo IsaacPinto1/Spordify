@@ -15,15 +15,15 @@ from bs4 import BeautifulSoup
 
 
 ######## Copy the following into terminal:
-#export SPOTIPY_CLIENT_ID=bc8bf2a574684725bea4c3900d745057
-#export SPOTIPY_CLIENT_SECRET=71d184e3dba04aa29ffc35362d1a0da4
-#export SPOTIPY_REDIRECT_URI="http://example.com"
+#export SPOTIPY_CLIENT_ID=<CLIENT_ID>
+#export SPOTIPY_CLIENT_SECRET=<CLIENT_SECRET>
+#export SPOTIPY_REDIRECT_URI="<REDIRECT_URI>"
 
 scope = ["user-library-read", "user-library-modify", "playlist-modify-public"]
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
+PLAYLIST = input("Enter playlist link: ")
 results = sp.playlist_tracks(PLAYLIST) # results = playlist details
 
-PLAYLIST = input("Enter playlist link: ")
 
 def reorder(order):
     for i in range(len(order)):
