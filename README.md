@@ -20,4 +20,4 @@ export SPOTIPY_REDIRECT_URI="<REDIRECT_URI>"
 Run the script and follow the instructions to sign into Spotify before entering your Spotify playlist link. You will then be able to choose which option to sort your playlist by.
 
 ## Disclaimer
-Spordify sorts playlists by removing songs and adding them back in sorted order. Therefore, it is recommended to use this application on **copies** of your playlists to protect the 'date added' data and ensure you don't lose your playlist if something goes wrong.
+Spordify sorts playlists by removing songs and adding them back in sorted order. Therefore, it is recommended to use this application on **copies** of your playlists to protect the 'date added' data and ensure you don't lose any songs if you accidentally quit the script or it crashes while it is running.
