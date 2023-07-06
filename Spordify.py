@@ -11,6 +11,7 @@ from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
+import random
 
 
 
@@ -30,160 +31,131 @@ def reorder(order):
         sp.playlist_remove_all_occurrences_of_items(PLAYLIST, [order[i]]) # delete track from playlist
         sp.playlist_add_items(PLAYLIST, [order[i]]) # append it to the end
 
-def scrape(songs, attribute): # 0: key, 1: bpm
+def makeArray(choice):
+    order = []
+    if choice == 'Name' or choice == 'BPM' or choice == 'Key' or choice == 'Randomize':
+        for track in results['items']:
+            if track['track']['is_local']:
+                continue
+            order.append([track['track']['name'] + " - " + track['track']['artists'][0]['name'],
+            track['track']['uri']])
+            # Generate array as [name - artist, ID]
 
-    # take in songs as [name artist, ID]
 
+    elif choice == 'Artist':
+        for track in results['items']:
+            if track['track']['is_local']:
+                continue
+            order.append([track['track']['artists'][0]['name'],
+            track['track']['uri']])
+            # Generate array as [artist, ID]
+
+
+    elif choice == 'Album':
+        for track in results['items']:
+            if track['track']['is_local']:
+                continue
+            order.append([track['track']['album']['name'],
+            track['track']['uri']])
+            # Generate array as [album, ID]
+
+
+    elif choice == 'Duration':
+        for track in results['items']:
+            if track['track']['is_local']:
+                continue
+            order.append([track['track']['duration_ms'],
+            track['track']['uri']])
+            # Generate array as [duration, ID]
+
+
+    return order
+
+def report(order, choice): # 0: key, 2: BPM
+    for i in range(len(order)):
+        if choice == 0:
+            print(str(i+1) + ". " + order[i][0] + ": " + order[i][2])
+        elif choice == 2:
+            print(str(i+1) + ". " + order[i][0] + ": " + order[i][2] + " BPM")
+
+def sort(choice):
+    order = makeArray(choice)
+    if choice == 'BPM':
+        order = scrape(order, 2)
+        order = sorted(order, key=lambda x: int(x[2]))
+        report(order, 2)
+    elif choice == 'Key':
+        order = scrape(order, 0)
+        order = sorted(order, key=lambda x: x[3])
+        report(order, 0)
+    elif choice == 'Randomize':
+        random.shuffle(order)
+    else:
+        order.sort()
+    order = [element[1] for element in order]
+    reorder(order)
+
+def scrape(songs, attribute): # 0: key, 2: bpm
+
+    # take in songs as [name - artist, ID]
     d = {
-        "A Major": 0,
-        "A Minor": 1,
-        "A# Major": 2,
-        "A# Minor": 3,
-        "B♭ Major": 4,
-        "B♭ Minor": 5,
-        "B Major": 6,
-        "B Minor": 7,
-        "C Major": 8,
-        "C Minor": 9,
-        "C# Major": 10,
-        "C# Minor": 11,
-        "D♭ Major": 12,
-        "D♭ Minor": 13,
-        "D Major": 14,
-        "D Minor": 15,
-        "D# Major": 16,
-        "D# Minor": 17,
-        "E♭ Major": 18,
-        "E♭ Minor": 19,
-        "E Major": 20,
-        "E Minor": 21,
-        "F Major": 22,
-        "F Minor": 23,
-        "F# Major": 24,
-        "F# Minor": 25,
-        "G♭ Major": 26,
-        "G♭ Minor": 27,
-        "G Major": 28,
-        "G Minor": 29,
-        "G# Major": 30,
-        "G# Minor": 31,
-        "A♭ Major": 32,
-        "A♭ Minor": 33
+        "A": 0,
+        "A♯/B♭": 1,
+        "B": 2,
+        "C": 3,
+        "C♯/D♭": 4,
+        "D": 5,
+        "D♯/E♭": 6,
+        "E": 7,
+        "F": 8,
+        "F♯/G♭": 9,
+        "G": 10,
+        "G♯/A♭": 11
     }
 
-
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+    driver.get("https://songbpm.com/searches/3cad117e-42f0-4b57-b62d-b1c797d46fcf")
+    driver.minimize_window()
 
-    driver.get("https://tunebat.com/")
+    def loaded(song):
+        page_source = driver.page_source
+        soup = BeautifulSoup(page_source,features="html.parser")
+        key = soup.find("h1", class_="mb-8")
+        return key.text[16:].lower() == song.lower()
 
     for song in songs:
-        search = WebDriverWait(driver, timeout=10).until(lambda d: d.find_element(By.CLASS_NAME, "ant-input-lg")) #find search bar
+        search = WebDriverWait(driver, timeout=10).until(lambda d: d.find_element(By.NAME, "query")) #find search bar
 
+        search.clear()
         search.send_keys(song[0]) #input song name
 
         search.send_keys(Keys.ENTER)
 
-        WebDriverWait(driver, timeout=10).until(EC.none_of(lambda d: d.find_element(By.CLASS_NAME,"anticon-loading-3-quarters"))) # wait until page loads
+        while True:
+            if loaded(song[0]):
+                break
 
         page_source = driver.page_source
 
         soup = BeautifulSoup(page_source,features="html.parser")
-        key = soup.find_all("div", class_="k43JJ")
-        key = key[attribute] # 0: key, 1: bpm
-        key = key.find("p",class_="lAjUd")
-        if attribute == 1:
-            song[0] = key.text
-        else:
-            song[0] = d[key.text]
-    return songs
+        key = soup.find_all("span", class_="sm:text-3xl")
+        key = key[attribute] # 0: key, 2: bpm
+        song.append(key.text)
+        if attribute == 0:
+            song.append(d[key.text])
+    return songs # return as [name - artist, ID, BPM] or [name - artist, ID, key, key translation]
     
-def nameSort():
-    order = []
-    for track in results['items']: # for every track in the playlist
-        order.append([track['track']['name'] + " " + track['track']['artists'][0]['name'],
-        track['track']['uri']])
-    # Generate array as [name artist, ID]
-    
-    order.sort()
-    order = [element[1] for element in order]
-    reorder(order)
-
-def artistSort():
-    order = []
-    for track in results['items']: # for every track in the playlist
-        order.append([track['track']['artists'][0]['name'],
-        track['track']['uri']])
-    # Generate array as [artist, ID]
-    
-    order.sort()
-    order = [element[1] for element in order]
-    reorder(order)
-
-def albumSort():
-    order = []
-    for track in results['items']: # for every track in the playlist
-        order.append([track['track']['album']['name'],
-        track['track']['uri']])
-    # Generate array as [album, ID]
-
-    order.sort()
-    order = [element[1] for element in order]
-    reorder(order)
-
-def durationSort():
-    order = []
-    for track in results['items']: # for every track in the playlist
-        order.append([track['track']['duration_ms'],
-        track['track']['uri']])
-    # Generate array as [duration, ID]
-    
-    order.sort()
-    order = [element[1] for element in order]
-    reorder(order)
-
-def bpmSort():
-    order = []
-    for track in results['items']: # for every track in the playlist
-        order.append([track['track']['name'] + " " + track['track']['artists'][0]['name'],
-        track['track']['uri']])
-    # Generate array as [name artist, ID]
-    
-    order = scrape(order, 1)
-    order = sorted(order, key=lambda x: int(x[0]))
-    order = [element[1] for element in order]
-    reorder(order)
-
-def keySort():
-    order = []
-    for track in results['items']: # for every track in the playlist
-        order.append([track['track']['name'] + " " + track['track']['artists'][0]['name'],
-        track['track']['uri']])
-    # Generate array as [name artist, ID]
-    
-    order = scrape(order, 0)
-    order.sort()
-    order = [element[1] for element in order]
-    reorder(order)
-
 ##### Get user choice:
 questions = [
   inquirer.List('sort',
                 message="Choose a sorting option",
-                choices=['Name', 'Artist', 'Album', 'Duration', 'BPM', 'Key'],
+                choices=['Name', 'Artist', 'Album', 'Duration', 'BPM', 'Key', 'Randomize'],
             ),
 ]
 answers = inquirer.prompt(questions)
 choice = answers['sort']
+sort(choice)
 
-if choice == 'Name':
-    nameSort()
-elif choice == 'Artist':
-    artistSort()
-elif choice == 'Album':
-    albumSort()
-elif choice == 'Duration':
-    durationSort()
-elif choice == 'BPM':
-    bpmSort()
-elif choice == 'Key':
-    keySort()
+
+
+##### To Do:
